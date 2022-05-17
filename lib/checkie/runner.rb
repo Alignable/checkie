@@ -6,7 +6,9 @@ class Checkie::Runner
 
     if action == "opened"
       poster.post_pr_rules_comment!(Checkie::Parser.instance.pr_rules)
-    elsif action == "synchronize"
+    end
+
+    if action == "synchronize" || action == "opened"
       data = fetcher.fetch_files
 
       matcher = Checkie::Matcher.new(data)
