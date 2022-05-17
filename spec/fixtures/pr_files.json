@@ -1,0 +1,14 @@
+[
+  {
+    "sha": "aed3147f5ca76dbd32929226f140d85f504342aa",
+    "filename": "README.md",
+    "status": "added",
+    "additions": 45,
+    "deletions": 0,
+    "changes": 45,
+    "blob_url": "https://github.com/Alignable/checkie/blob/dd52731e1f894f53e5972e57255405961ca4ab38/README.md",
+    "raw_url": "https://github.com/Alignable/checkie/raw/dd52731e1f894f53e5972e57255405961ca4ab38/README.md",
+    "contents_url": "https://api.github.com/repos/Alignable/checkie/contents/README.md?ref=dd52731e1f894f53e5972e57255405961ca4ab38",
+    "patch": "@@ -0,0 +1,45 @@\n+# Setup\n+\n+1. Create github action\n+```yml\n+jobs:\n+  checkie:\n+    runs-on: ubuntu-latest\n+    defaults:\n+      run:\n+        working-directory: ./.github/checkie\n+    steps:\n+      - uses: actions/checkout@v3\n+      - uses: ruby/setup-ruby@v1\n+        with:\n+          working-directory: ./.github/checkie\n+          bundler-cache: false\n+      - run: bundle install\n+      - run: bundle exec ruby main.rb $PR_URL $ACTION\n+        env:\n+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n+          PR_URL: ${{ github.event.pull_request.url }}\n+          ACTION: ${{ github.event.action }}\n+```\n+2. Create project in `.github/checkie` with Gemfile:\n+```ruby\n+gem \"checkie\", github: 'Alignable/checkie'\n+```\n+3. Create main file:\n+```ruby\n+require './rules'\n+\n+# Run from command line with bundle exec ruby main.rb PR_URL ACTION_TYPE\n+run(ARGV[0].dup, ARGV[1].dup)\n+```\n+4. Write rules in that project in `rules.rb`. example:\n+```ruby\n+file_rule :hardcoded_url,\n+          \"Looks like you might have a hardcoded url http:// - should that be an ENV variable?\"\n+\n+matching(\"app/facades/**.rb\") do |changes, files|\n+  changes.added(/https?\\:\\/\\//) do\n+    check(:hardcoded_url)\n+  end\n+end\n+```\n\\ No newline at end of file"
+  }
+]
