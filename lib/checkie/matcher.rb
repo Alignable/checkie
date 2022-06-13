@@ -34,7 +34,7 @@ class Checkie::Matcher
         patch = file[:patch]
 
         if File.fnmatch(match_details[:pattern],filename)
-          files.add_hunk(file[:status],filename, url: file[:blob_url])
+          files.add_hunk(file[:status],filename, url: file[:blob_url], additions: file[:additions], deletions: file[:deletions])
 
           # need to break changes into added and removed
           changes.add_patch(filename,patch,  url: file[:blob_url])

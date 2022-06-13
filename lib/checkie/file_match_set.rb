@@ -30,6 +30,12 @@ class Checkie::FileMatchSet  < Checkie::MatchSet
     match_helper(matching,&block)
   end
 
+  def added_lines(lines, &block)
+    matching = @hunks[:touched].select do |hunk|
+      hunk[1][:additions] > lines
+    end
+    match_helper(matching,&block)
+  end
 
   def postfix_filename(filename,postfix)
     ext = File.extname(filename)

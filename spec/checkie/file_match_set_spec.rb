@@ -113,6 +113,15 @@ describe Checkie::FileMatchSet do
     end
   end
 
+  describe "#added_lines" do
+    it "only matches files that added at least those lines" do
+      match_set.add_hunk("added", "app/models/something.rb", additions: 10)
+      match_set.add_hunk("added", "app/models/something.rb", additions: 5)
+      match_set.add_hunk("modified", "app/models/something.ex", additions: 10)
+      expect(match_set.added_lines(8).length).to eq 2
+    end
+  end
+
   describe "#removed" do
     it "only matches removed hunks" do
       match_set.add_hunk("added", "app/models/something.rb")
