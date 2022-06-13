@@ -77,9 +77,9 @@ matching("app/models/**.rb") do |changes, files|
     ...
   end
 
-  # if you changed more than 50 lines in models in the PR
-  changes.touched do
-    check(:some_check) if length > 50
+  # if you added more than 50 lines in models in the PR
+  files.added_lines(50) do
+    check(:some_check)
   end
 end
 ```
