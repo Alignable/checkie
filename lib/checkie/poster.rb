@@ -3,6 +3,7 @@ require "octokit"
 class Checkie::Poster
 
   LINE_WIDTH = 70
+  GITHUB_ANNOTATION_BATCH = 50
 
   def initialize(details, dry_run: true)
     @details = details
@@ -35,7 +36,10 @@ class Checkie::Poster
         puts(annotations)
       else
         check_run_id = client.check_runs_for_ref(@details[:base][:repo][:id], @details[:head][:sha])['check_runs'].find { |run| run[:name] == 'checkie' }[:id]
-        client.update_check_run(@details[:base][:repo][:id], check_run_id, output: { annotations: annotations, title: "Checkie", summary: "#{annotations.length} annotations" })
+        client.update_check_run(@details[:base][:repo][:id], check_run_id, output: { title: "Checkie", summary: "#{annotations.length} annotations" })
+        annotations.each_slice(GITHUB_ANNOTATION_BATCH) do |a|
+          client.update_check_run(@details[:base][:repo][:id], check_run_id, output: { annotations: a })
+        end
       end
     end
   end
