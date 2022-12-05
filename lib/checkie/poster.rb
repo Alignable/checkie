@@ -10,23 +10,6 @@ class Checkie::Poster
     @dry_run = dry_run
   end
 
-  # Post general PR rules as a comment
-  def post_pr_rules_comment!(rules)
-    comment = "Hi, It's Checkie! Here are some general rules to follow for new pull requests:\n\n"
-
-    comment += rules.map do |name, description|
-      "- [ ] #{description}"
-    end.join("\n")
-
-    if @dry_run
-      puts comment
-    else
-      client.add_comment(@details[:base][:repo][:id],
-                         @details[:number],
-                         comment)
-    end
-  end
-
   # Post file rules as annotations
   def post_annotations!(rules)
     if rules.length > 0

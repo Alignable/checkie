@@ -18,16 +18,6 @@ describe Checkie::Parser do
     end
   end
 
-  describe "add_pr_rule" do
-    it "adds a rule to the list of rules" do
-      expect do
-        instance.add_pr_rule(:something, "Because")
-      end.to change { instance.pr_rules.length }.by(1)
-
-      expect(instance.pr_rules).to eq [["something", "Because"]]
-    end
-  end
-
   describe "add_matching_file" do
     it "adds a matching rule" do
       expect do
