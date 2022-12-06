@@ -29,7 +29,7 @@ describe Checkie::Matcher do
         end
       end
 
-      expect(matcher.match).to eq({"readme"=>[["README.md", {:url=>"https://github.com/Alignable/checkie/blob/dd52731e1f894f53e5972e57255405961ca4ab38/README.md"}]] })
+      expect(matcher.match).to eq({"readme"=>[["README.md", {additions: 45, deletions: 0, :url=>"https://github.com/Alignable/checkie/blob/dd52731e1f894f53e5972e57255405961ca4ab38/README.md"}]] })
 
     end
   end

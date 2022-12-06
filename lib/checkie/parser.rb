@@ -2,7 +2,7 @@ require "singleton"
 class Checkie::Parser
   include Singleton
 
-  attr_reader :matches, :rules, :pr_rules
+  attr_reader :matches, :rules
 
   def initialize
     reinitialize
@@ -10,7 +10,6 @@ class Checkie::Parser
 
   def reinitialize
     @rules = {}
-    @pr_rules = []
     @matches = []
   end
 
@@ -28,10 +27,6 @@ class Checkie::Parser
                 description: description,
                 references: references
               }
-  end
-
-  def add_pr_rule(name, description)
-    @pr_rules << [name.to_s, description]
   end
 
 end

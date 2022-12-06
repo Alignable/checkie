@@ -24,10 +24,6 @@ def file_rule(name,description,references:[])
   Checkie::Parser.instance.add_file_rule(name, description, references: references)
 end
 
-def pr_rule(name,description)
-  Checkie::Parser.instance.add_pr_rule(name, description)
-end
-
 def run(url, action)
   Checkie::Runner.new.run(url, action)
 end
