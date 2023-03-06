@@ -18,7 +18,14 @@ class Checkie::Poster
       if @dry_run
         puts(annotations)
       else
-        check_run_id = client.check_runs_for_ref(@details[:base][:repo][:id], @details[:head][:sha])['check_runs'].find { |run| run[:name] == 'checkie' }[:id]
+        repo_id = @details[:base][:repo][:id]
+        sha = @details[:head][:sha]
+        check_runs = client.check_runs_for_ref(repo_id, sha)&.dig('check_runs')
+        raise "No check runs found for sha: #{sha}" unless check_runs.present?
+        
+        check_run_id = check_runs.find { |run| run[:name] == 'checkie' }&.dig(:id)
+        raise "Could not find checkie run. Runs: #{check_runs.map{|r|r[:name]}}" unless check_run_id.present?
+        
         annotations.each_slice(GITHUB_ANNOTATION_BATCH) do |a|
           client.update_check_run(@details[:base][:repo][:id], check_run_id, output: { annotations: a, title: "Checkie", summary: "#{annotations.length} annotations" })
         end
