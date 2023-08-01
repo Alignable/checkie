@@ -163,6 +163,20 @@ describe Checkie::FileMatchSet do
 
       expect(match_set.without(:spec).length).to eq 0
     end
+
+    context "with further nesting" do
+      it "returns hunks without matching specs" do
+        match_set.add_hunk("added", "rails/app/models/something.rb")
+        expect(match_set.without('rails/spec', '_spec').length).to eq 1
+      end
+
+      it "doesn't return hunks if they have matching files" do
+        all_match_set.add_hunk("added","rails/spec/models/something_spec.rb")
+        match_set.add_hunk("added", "rails/app/models/something.rb")
+
+        expect(match_set.without('rails/spec', '_spec').length).to eq 0
+      end
+    end
   end
 
 end
