@@ -32,6 +32,15 @@ describe Checkie::Matcher do
       expect(matcher.match).to eq({"readme"=>[["README.md", {additions: 45, deletions: 0, :url=>"https://github.com/Alignable/checkie/blob/dd52731e1f894f53e5972e57255405961ca4ab38/README.md"}]] })
 
     end
+    
+    it 'supports extglob' do
+      instance.add_matching_file("{README,abc}*") do |changes,files|
+        files.added do
+          check(:readme)
+        end
+      end
+      expect(matcher.match).to eq({"readme"=>[["README.md", {additions: 45, deletions: 0, :url=>"https://github.com/Alignable/checkie/blob/dd52731e1f894f53e5972e57255405961ca4ab38/README.md"}]] })
+    end
   end
 
 end
