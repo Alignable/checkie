@@ -18,6 +18,7 @@ class Checkie::Fetcher
     repo_id = @details[:base][:repo][:id]
     pr_number = @details[:number]
 
+    pp "fetching"
     client.pull_request_files(repo_id, pr_number)
   end
 

@@ -26,6 +26,7 @@ class Checkie::Matcher
     ruleset_to_files = {}
     @pr.each do |file|
       rules = gather_rules_ai(file[:filename])
+      pp "Gathered rules: #{rules}"
       next if rules.empty?
       changeset = {name: file[:filename], patch: file[:patch]}
       if ruleset_to_files.key?(rules)
