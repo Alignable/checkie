@@ -16,6 +16,43 @@ class Checkie::Matcher
     @rules[rule.to_s] += references if references
   end
 
+  def check_rule(rule)
+    @rules[rule.to_s] ||= []
+    rule
+  end
+
+
+  def match_ai
+    ruleset_to_files = {}
+    @pr.each do |file|
+      rules = gather_rules_ai(file[:filename])
+      next if rules.empty?
+      changeset = {name: file[:filename], patch: file[:patch]}
+      if ruleset_to_files.key?(rules)
+        ruleset_to_files[rules].append(changeset)
+      else
+        ruleset_to_files[rules] = [changeset]
+      end
+    end
+    ruleset_to_files.map do |k,v|
+      [k.join("\n"), v]
+    end
+  end
+
+  def gather_rules_ai(path)
+    applicable = Set[]
+    parser.matches_ai.each do |rule|
+      if File.fnmatch(rule[:pattern], path, File::FNM_EXTGLOB)
+        next if rule[:exclude] && File.fnmatch(rule[:exclude],path, File::Constants::FNM_EXTGLOB)
+        # rule[:text] = parser.rules_ai[rule[]]
+        rule[:rules].each do |r|
+          applicable.add(r[:description])
+        end
+      end
+    end
+    return applicable
+  end
+
   def match
     all_files = Checkie::FileMatchSet.new(self)
 

@@ -10,6 +10,31 @@ class Checkie::Poster
     @dry_run = dry_run
   end
 
+  def post_ai_annotations!(rules)
+    if rules.length > 0
+      annotations = annotations_ai(rules)
+      repo_name = @details[:base][:repo][:full_name]
+      sha = @details[:head][:sha]
+      
+      annotations.each do |a|
+        if @dry_run
+          pp a
+        else
+          client.create_pull_request_comment(
+            repo_name,
+            @details[:number],
+            a[:message],
+            sha,
+            a[:path],
+            a[:start_line]
+          )
+        end
+      rescue Octokit::UnprocessableEntity
+        pp "Bad request sent! Probably a line number issue: #{a[:path]}:#{a[:start_line]}"
+      end
+    end
+  end
+
   # Post file rules as annotations
   def post_annotations!(rules)
     if rules.length > 0
@@ -31,6 +56,26 @@ class Checkie::Poster
   end
 
   private
+
+  def annotations_ai(rules)
+    arr = []
+    rules.each do |r|
+      r = r["violations"]
+      next if r.empty?
+      r.each do |annotation|
+        # Because Claude can be stupid.
+        next if annotation["suggestion"].downcase.include?("no violation")
+        arr << {
+          path: annotation["file"],
+          start_line: annotation["line_number"],
+          end_line: annotation["line_number"],
+          title: annotation["rule"],
+          message: "#{annotation["issue"]}:\n#{annotation["suggestion"]}"
+        }
+      end
+    end
+    return arr
+  end
 
   def annotations(rules)
     arr = []

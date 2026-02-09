@@ -2,7 +2,7 @@ require "singleton"
 class Checkie::Parser
   include Singleton
 
-  attr_reader :matches, :rules
+  attr_reader :matches, :rules, :matches_ai, :rules_ai
 
   def initialize
     reinitialize
@@ -10,23 +10,43 @@ class Checkie::Parser
 
   def reinitialize
     @rules = {}
+    @rules_ai = {}
     @matches = []
+    @matches_ai = []
   end
 
-  def add_matching_file(glob_pattern, matching_proc=nil, &block)
+  def add_matching_file(glob_pattern, matching_proc=nil, **opts, &block)
     matching_proc ||= block
-    @matches << { pattern: glob_pattern, 
-                  matching_proc: matching_proc 
-                }
+    obj = { pattern: glob_pattern, 
+            matching_proc: matching_proc 
+          }
+    if opts[:ai]
+      obj[:rules] = opts[:rules].map do |r|
+        @rules_ai[r.to_s]
+      end
+      if opts[:exclude]
+         obj[:exclude] = opts[:exclude]
+      end
+      @matches_ai << obj
+    else
+      @matches << obj
+    end
   end
 
-  def add_file_rule(name, description, references: [])
-    raise "Duplicate rule #{name}" if @rules[name.to_s].present?
-    @rules[name.to_s] = {
-                name: name.to_s,
-                description: description,
-                references: references
-              }
+  def add_file_rule(name, description, references: [], ai: false)
+    raise "Duplicate rule #{name}" if @rules_ai[name.to_s].present? || @rules_ai[name.to_s].present?
+    if ai
+      @rules_ai[name.to_s] = {
+        name: name.to_s,
+        description: description
+      }
+    else
+      @rules[name.to_s] = {
+                  name: name.to_s,
+                  description: description,
+                  references: references
+                }
+    end
   end
 
 end
