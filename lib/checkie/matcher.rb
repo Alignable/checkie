@@ -24,6 +24,7 @@ class Checkie::Matcher
 
   def match_ai
     ruleset_to_files = {}
+    pp parser.matches_ai
     @pr.each do |file|
       rules = gather_rules_ai(file[:filename])
       pp "Gathered rules: #{rules}"
