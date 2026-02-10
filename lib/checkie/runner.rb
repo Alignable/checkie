@@ -23,7 +23,7 @@ class Checkie::Runner
       # mappping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
-      repo_dir = File.expand_path("../../", __dir__)
+      repo_dir = File.expand_path("../../", Dir.pwd)
       pp Open3.capture3("pwd", chdir: repo_dir)
       res = Open3.capture3("claude", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
       puts res[0]
