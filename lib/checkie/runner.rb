@@ -4,7 +4,7 @@ class Checkie::Runner
   # Action is the pull request action type
   def run(url, action)
     fetcher = Checkie::Fetcher.new(url)
-    poster = Checkie::Poster.new(fetcher.details, dry_run: false)
+    poster = Checkie::Poster.new(fetcher.details, dry_run: true)
 
     if action == "synchronize" || action == "opened"
       data = fetcher.fetch_files
@@ -23,7 +23,8 @@ class Checkie::Runner
       # mappping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
-      res = Open3.capture3("claude", "--dangerously-skip-permissions", "-p", prompt)
+      repo_dir = File.expand_path("../../", __dir__)
+      res = Open3.capture3("claude", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
       puts res[0]
       prefix = res[0].index("```json")
       postfix = res[0].index("```", prefix + 7)
@@ -46,8 +47,7 @@ class Checkie::Runner
     <<-PROMPT
     You are an AI code reviewer, going through PRs and identifying any changes that 
     don't follow the teams established best practices.
-    You are running in the directory: `AlignableWeb/.github/checkie/`. For any file searches ensure you are starting in 
-    `../../`, or in the top-level `AlignableWeb`
+
     Code style rules:
     #{rules}
 
