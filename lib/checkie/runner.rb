@@ -23,7 +23,7 @@ class Checkie::Runner
       prompt = create_prompt(mapping[0], mapping[1])
 
       repo_dir = File.expand_path("../../", Dir.pwd)
-      res = Open3.capture3("claude", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
+      res = Open3.capture3("claude", "--model", "haiku", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
       puts res[0]
       prefix = res[0].index("```json")
       postfix = res[0].index("```", prefix + 7)
