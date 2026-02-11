@@ -19,12 +19,10 @@ class Checkie::Runner
 
   def call_claude(rule_mapping)
     rule_mapping.map do |mapping|
-
       # mappping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
       repo_dir = File.expand_path("../../", Dir.pwd)
-      pp Open3.capture3("pwd", chdir: repo_dir)
       res = Open3.capture3("claude", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
       puts res[0]
       prefix = res[0].index("```json")
@@ -48,7 +46,6 @@ class Checkie::Runner
     <<-PROMPT
     You are an AI code reviewer, going through PRs and identifying any changes that 
     don't follow the teams established best practices.
-    Ensure that any glob or grep tool uses have the `path` parameter set to the top-level of the repo, `AlignableWeb/`
 
     Code style rules:
     #{rules}

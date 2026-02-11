@@ -14,7 +14,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "octokit"
   s.add_runtime_dependency "git_diff_parser"
   s.add_runtime_dependency "activesupport"
-  s.add_runtime_dependency "pry"
 
   # to write specs for rules.rb
   s.add_runtime_dependency "rspec"
