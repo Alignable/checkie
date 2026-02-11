@@ -1,5 +1,4 @@
 require "open3"
-require 'pry'
 class Checkie::Runner
   # Action is the pull request action type
   def run(url, action)
