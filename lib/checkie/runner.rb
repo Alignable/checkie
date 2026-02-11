@@ -65,6 +65,7 @@ class Checkie::Runner
     4. You may read all related files for context
     5. IF THERE ARE NO VIOLATIONS DO NOT RETURN ANYTHING.
 
+    DO NOT INCLUDE ANY OF YOUR REASONING IN THE OUTPUT. JUST JSON OUTPUT.
     Return valid JSON only:
     {
       "violations": [
