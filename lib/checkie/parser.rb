@@ -33,12 +33,13 @@ class Checkie::Parser
     end
   end
 
-  def add_file_rule(name, description, references: [], ai: false)
+  def add_file_rule(name, description, exploration=false, references: [], ai: false)
     raise "Duplicate rule #{name}" if @rules_ai[name.to_s].present? || @rules_ai[name.to_s].present?
     if ai
       @rules_ai[name.to_s] = {
         name: name.to_s,
-        description: description
+        description: description,
+        exploration: exploration
       }
     else
       @rules[name.to_s] = {

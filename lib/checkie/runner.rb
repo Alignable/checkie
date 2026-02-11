@@ -1,27 +1,33 @@
 require "open3"
+require "anthropic"
 class Checkie::Runner
   # Action is the pull request action type
   def run(url, action)
     fetcher = Checkie::Fetcher.new(url)
-    poster = Checkie::Poster.new(fetcher.details, dry_run: false)
+    poster = Checkie::Poster.new(fetcher.details, dry_run: true)
 
     if action == "synchronize" || action == "opened"
       data = fetcher.fetch_files
 
       matcher = Checkie::Matcher.new(data)
       rules = matcher.match_ai
-      to_post = call_claude(rules)
-      poster.post_ai_annotations!(to_post)
+      to_post = call_claude(rules[:exploration]) + call_claude_api(rules[:standard])
+      pp to_post
+      # poster.post_ai_annotations!(to_post)
       # poster.post_annotations!(rules)
     end
   end
 
   def call_claude(rule_mapping)
-    rule_mapping.map do |mapping|
+    total_calls = 0
+    pp "Beginning checks with Claude Code..."
+    # assumes that non-exploratory rules have been filtered out
+    res = rule_mapping.map do |mapping|
       # mappping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
       repo_dir = File.expand_path("../../", Dir.pwd)
+      total_calls += 1
       res = Open3.capture3("claude", "--model", "haiku", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
       puts res[0]
       prefix = res[0].index("```json")
@@ -33,6 +39,83 @@ class Checkie::Runner
       parsed = res[0][prefix+7...postfix]
       JSON.parse(parsed)
     end
+    pp "Total CC calls: #{total_calls}"
+    res
+  end
+
+  def call_claude_api(rule_mapping)
+    pp "Beginning checks with API..."
+    # Assumes that exploratory rules have been filtered out
+    client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
+
+    total_calls = 0
+    res = rule_mapping.map do |mapping|
+      # mapping == [rule strings joined by \n, arr of patch diffs]
+      prompt = create_prompt(mapping[0], mapping[1])
+
+      begin
+        response = client.messages.create(
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 4096,
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          tools: [
+            {
+              name: "report_violations",
+              description: "Report code style violations found in the PR diff",
+              input_schema: structured_schema
+            }
+          ],
+          tool_choice: {
+            type: "tool",
+            name: "report_violations"
+          }
+        )
+        total_calls += 1
+
+        # Extract the tool use result
+        tool_use = response.content&.find { |block| block.type == :tool_use }
+        pp tool_use
+        if tool_use && tool_use.input
+          tool_use.input
+        else
+          puts "No tool use found in response"
+          { "violations" => [] }
+        end
+      rescue => e
+        puts "Error calling Claude API: #{e.message}"
+        { "violations" => [] }
+      end
+    end
+    pp "Total API calls: #{total_calls}"
+    res
+  end
+
+  def structured_schema
+    {
+      type: "object",
+      properties: {
+        violations: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              file: { type: "string", description: "Path to the file" },
+              rule: { type: "string", description: "Name of the rule violated" },
+              line_number: { type: "integer", description: "Line number in the diff (must be a + or - line)" },
+              issue: { type: "string", description: "Description of what's wrong" },
+              suggestion: { type: "string", description: "How to fix the issue" }
+            },
+            required: ["file", "rule", "line_number", "issue", "suggestion"]
+          }
+        }
+      },
+      required: ["violations"]
+    }
   end
 
   def create_prompt(rules, diffs)
@@ -58,14 +141,13 @@ class Checkie::Runner
     diff above - it may have been added elsewhere in the PR.
 
     Instructions:
-    1. For each changed file, check if modified lines violate any rules
-      1.1 Do not make your own assumptions about how to interpret the rules
-    2. line_number MUST be a line that appears in the diff (lines starting with + or -)
-    3. If a rule violation exists but no lines in the diff can be commented on, skip that violation
-    4. You may read all related files for context
-    5. IF THERE ARE NO VIOLATIONS DO NOT RETURN ANYTHING.
+    1. For each changed file, check if modified lines ONLY WITHIN THE DIFF violate any rules. 
+      1.1 DO NOT make your own assumptions about how to interpret the rules
+      1.2 DO NOT make up your own rules, such as grammar violations
+      1.3 DO NOT RESPOND WITH VIOLATIONS ON UNCHANGED CODE
+    2. You may read all related files for context
 
-    DO NOT INCLUDE ANY OF YOUR REASONING IN THE OUTPUT. JUST JSON OUTPUT.
+    Ensure all parts of your response are succinct and to the point. DO NOT ramble.
     Return valid JSON only:
     {
       "violations": [

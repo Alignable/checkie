@@ -28,8 +28,8 @@ def file_rule(name,description,references:[])
   Checkie::Parser.instance.add_file_rule(name, description, references: references)
 end
 
-def file_rule_ai(name, description)
-  Checkie::Parser.instance.add_file_rule(name, description, ai: true)
+def file_rule_ai(name, description, exploration: false)
+  Checkie::Parser.instance.add_file_rule(name, description, exploration, ai: true)
 end
 
 def run(url, action)

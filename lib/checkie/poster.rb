@@ -60,17 +60,17 @@ class Checkie::Poster
   def annotations_ai(rules)
     arr = []
     rules.each do |r|
-      r = r["violations"]
+      r = r[:violations]
       next if r.empty?
       r.each do |annotation|
         # Because Claude can be stupid.
-        next if annotation["suggestion"].downcase.include?("no violation")
+        next if annotation[:suggestion].downcase.include?("no violation")
         arr << {
-          path: annotation["file"],
-          start_line: annotation["line_number"],
-          end_line: annotation["line_number"],
-          title: annotation["rule"],
-          message: "#{annotation["issue"]}:\n#{annotation["suggestion"]}"
+          path: annotation[:file],
+          start_line: annotation[:line_number],
+          end_line: annotation[:line_number],
+          title: annotation[:rule],
+          message: "#{annotation[:issue]}:\n#{annotation[:suggestion]}"
         }
       end
     end
