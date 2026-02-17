@@ -48,7 +48,7 @@ class Checkie::Matcher
       next unless File.fnmatch(rule[:pattern], path, File::FNM_EXTGLOB)
       next if rule[:exclude] && rule[:exclude].any? { |p| File.fnmatch(p, path, File::FNM_EXTGLOB) }
 
-      rule[:rules].each do |r|
+      rule[:rules].compact.each do |r|
         if r[:exploration]
           exploration.add(r[:description])
         else
