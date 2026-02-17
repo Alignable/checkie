@@ -139,6 +139,7 @@ class Checkie::Runner
     any missing files (like spec files), you MUST use the Read tool or Glob tool to verify the file
     does not exist in the repository. Do not assume a file is missing just because it's not in the
     diff above - it may have been added elsewhere in the PR.
+    One block / line of code may violate multiple rules. Include any and all violations.
 
     Instructions:
     1. For each changed file, check if modified lines ONLY WITHIN THE DIFF violate any rules. 
