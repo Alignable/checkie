@@ -25,30 +25,20 @@ class Checkie::Matcher
   def match_ai
     ruleset_to_files = {exploration: {}, standard: {}}
     @pr.each do |file|
-      # std_rules, exp_rules = gather_rules_ai(file[:filename])
-      rules = gather_rules_ai(file[:filename])
-      next if rules.empty?
-
-      subset_key = if rules.include?("exploration")
-                     rules.delete("exploration")
-                     :exploration
-                   else
-                     :standard
-                   end
+      std_rules, exp_rules = gather_rules_ai(file[:filename])
+      next if std_rules.empty? && exp_rules.empty?
 
       changeset = {name: file[:filename], patch: file[:patch]}
-      ruleset_to_files[subset_key][rules] ||= []
-      ruleset_to_files[subset_key][rules] << changeset
-      # unless exp_rules.empty?
-      #   subset_key = :exploration
-      #   ruleset_to_files[subset_key][exp_rules] ||= []
-      #   ruleset_to_files[subset_key][exp_rules] << changeset
-      # end
-      # unless std_rules.empty?
-      #   subset_key = :standard
-      #   ruleset_to_files[subset_key][std_rules] ||= []
-      #   ruleset_to_files[subset_key][std_rules] << changeset
-      # end
+      unless exp_rules.empty?
+        subset_key = :exploration
+        ruleset_to_files[subset_key][exp_rules] ||= []
+        ruleset_to_files[subset_key][exp_rules] << changeset
+      end
+      unless std_rules.empty?
+        subset_key = :standard
+        ruleset_to_files[subset_key][std_rules] ||= []
+        ruleset_to_files[subset_key][std_rules] << changeset
+      end
     end
 
     {
@@ -62,20 +52,17 @@ class Checkie::Matcher
     exploration = Set[]
     parser.matches_ai.each do |rule|
       next unless File.fnmatch(rule[:pattern], path, File::FNM_EXTGLOB)
-      next if rule[:exclude] && File.fnmatch(rule[:exclude], path, File::FNM_EXTGLOB)
+      next if rule[:exclude] && rule[:exclude].any? { |p| File.fnmatch(p, path, File::FNM_EXTGLOB) }
 
       rule[:rules].each do |r|
-        # if r[:exploration]
-        #   exploration.add(r[:description])
-        # else
-        #   applicable.add(r[:description])
-        # end
-        applicable.add("exploration") if r[:exploration]
-        applicable.add(r[:description])
+        if r[:exploration]
+          exploration.add(r[:description])
+        else
+          applicable.add(r[:description])
+        end
       end
     end
-    # [applicable, exploration]
-    applicable
+    [applicable, exploration]
   end
 
   def match

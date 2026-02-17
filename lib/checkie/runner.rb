@@ -11,10 +11,10 @@ class Checkie::Runner
 
       matcher = Checkie::Matcher.new(data)
       rules = matcher.match_ai
-      to_post = call_claude(rules[:exploration]) + call_claude_api(rules[:standard])
-      pp to_post
-      # poster.post_ai_annotations!(to_post)
-      # poster.post_annotations!(rules)
+      ai_rules = call_claude(rules[:exploration]) + call_claude_api(rules[:standard])
+      reg_rules = matcher.match
+      poster.post_ai_annotations!(ai_rules)
+      poster.post_annotations!(reg_rules)
     end
   end
 

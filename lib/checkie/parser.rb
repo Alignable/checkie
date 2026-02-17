@@ -25,7 +25,7 @@ class Checkie::Parser
         @rules_ai[r.to_s]
       end
       if opts[:exclude]
-         obj[:exclude] = opts[:exclude]
+         obj[:exclude] = Array(opts[:exclude])
       end
       @matches_ai << obj
     else
@@ -33,19 +33,19 @@ class Checkie::Parser
     end
   end
 
-  def add_file_rule(name, description, exploration=false, references: [], ai: false)
+  def add_file_rule(name, description, opts={})
     raise "Duplicate rule #{name}" if @rules_ai[name.to_s].present? || @rules_ai[name.to_s].present?
-    if ai
+    if opts[:ai]
       @rules_ai[name.to_s] = {
         name: name.to_s,
         description: description,
-        exploration: exploration
+        exploration: opts[:exploration],
       }
     else
       @rules[name.to_s] = {
                   name: name.to_s,
                   description: description,
-                  references: references
+                  references: opts[:references]
                 }
     end
   end
