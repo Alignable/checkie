@@ -16,12 +16,6 @@ class Checkie::Matcher
     @rules[rule.to_s] += references if references
   end
 
-  def check_rule(rule)
-    @rules[rule.to_s] ||= []
-    rule
-  end
-
-
   def match_ai
     ruleset_to_files = {exploration: {}, standard: {}}
     @pr.each do |file|
