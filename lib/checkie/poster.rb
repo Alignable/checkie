@@ -70,7 +70,7 @@ class Checkie::Poster
           start_line: annotation[:line_number],
           end_line: annotation[:line_number],
           title: annotation[:rule],
-          message: "#{annotation[:issue]}:\n#{annotation[:suggestion]}"
+          message: "#{annotation[:issue]}\n#{annotation[:suggestion]}"
         }
       end
     end
