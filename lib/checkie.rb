@@ -28,7 +28,7 @@ def file_rule(name,description,references:[])
   Checkie::Parser.instance.add_file_rule(name, description, references: references)
 end
 
-def file_rule_ai(name, description, opts: {})
+def file_rule_ai(name, description, **opts)
   Checkie::Parser.instance.add_file_rule(name, description, opts)
 end
 
