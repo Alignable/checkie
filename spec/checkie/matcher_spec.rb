@@ -49,7 +49,7 @@ describe Checkie::Matcher do
     end
 
     it "returns standard rules when AI rules are added" do
-      instance.add_file_rule(:readme_check, "You edited readme", {ai: true})
+      instance.add_file_rule(:readme_check, "You edited readme", ai: true)
       instance.add_matching_file("README*", ai: true, rules: [:readme_check])
 
       result = matcher.match_ai
@@ -61,7 +61,7 @@ describe Checkie::Matcher do
     end
 
     it "returns exploration rules when marked as exploration" do
-      instance.add_file_rule(:readme_explore, "Consider readme impact", {ai: true, exploration: true})
+      instance.add_file_rule(:readme_explore, "Consider readme impact", ai: true, exploration: true)
       instance.add_matching_file("README*", ai: true, rules: [:readme_explore])
 
       result = matcher.match_ai
@@ -73,8 +73,8 @@ describe Checkie::Matcher do
     end
 
     it "separates standard and exploration rules" do
-      instance.add_file_rule(:readme_check, "You edited readme", {ai: true})
-      instance.add_file_rule(:readme_explore, "Consider readme impact", {ai: true, exploration: true})
+      instance.add_file_rule(:readme_check, "You edited readme", ai: true)
+      instance.add_file_rule(:readme_explore, "Consider readme impact", ai: true, exploration: true)
       instance.add_matching_file("README*", ai: true, rules: [:readme_check, :readme_explore])
 
       result = matcher.match_ai
@@ -85,7 +85,7 @@ describe Checkie::Matcher do
     end
 
     it "supports exclude patterns" do
-      instance.add_file_rule(:readme_check, "You edited readme", {ai: true})
+      instance.add_file_rule(:readme_check, "You edited readme", ai: true)
       instance.add_matching_file("*", ai: true, rules: [:readme_check], exclude: "README*")
 
       result = matcher.match_ai
@@ -94,7 +94,7 @@ describe Checkie::Matcher do
     end
 
     it "supports array of exclude patterns" do
-      instance.add_file_rule(:readme_check, "You edited readme", {ai: true})
+      instance.add_file_rule(:readme_check, "You edited readme", ai: true)
       instance.add_matching_file("*", ai: true, rules: [:readme_check], exclude: ["README*", "LICENSE*"])
 
       result = matcher.match_ai
@@ -105,7 +105,7 @@ describe Checkie::Matcher do
 
   describe "#gather_rules_ai" do
     it "returns empty sets for non-matching paths" do
-      instance.add_file_rule(:readme_check, "You edited readme", {ai: true})
+      instance.add_file_rule(:readme_check, "You edited readme", ai: true)
       instance.add_matching_file("README*", ai: true, rules: [:readme_check])
 
       standard, exploration = matcher.gather_rules_ai("other_file.txt")
@@ -114,7 +114,7 @@ describe Checkie::Matcher do
     end
 
     it "returns standard rules for matching paths" do
-      instance.add_file_rule(:readme_check, "You edited readme", {ai: true})
+      instance.add_file_rule(:readme_check, "You edited readme", ai: true)
       instance.add_matching_file("README*", ai: true, rules: [:readme_check])
 
       standard, exploration = matcher.gather_rules_ai("README.md")
@@ -123,7 +123,7 @@ describe Checkie::Matcher do
     end
 
     it "returns exploration rules for matching paths" do
-      instance.add_file_rule(:readme_explore, "Consider readme impact", {ai: true, exploration: true})
+      instance.add_file_rule(:readme_explore, "Consider readme impact", ai: true, exploration: true)
       instance.add_matching_file("README*", ai: true, rules: [:readme_explore])
 
       standard, exploration = matcher.gather_rules_ai("README.md")
@@ -132,7 +132,7 @@ describe Checkie::Matcher do
     end
 
     it "excludes paths matching exclude pattern" do
-      instance.add_file_rule(:readme_check, "You edited readme", {ai: true})
+      instance.add_file_rule(:readme_check, "You edited readme", ai: true)
       instance.add_matching_file("*", ai: true, rules: [:readme_check], exclude: ["README*"])
 
       standard, exploration = matcher.gather_rules_ai("README.md")
@@ -141,7 +141,7 @@ describe Checkie::Matcher do
     end
 
     it "excludes paths matching any pattern in exclude array" do
-      instance.add_file_rule(:doc_check, "You edited documentation", {ai: true})
+      instance.add_file_rule(:doc_check, "You edited documentation", ai: true)
       instance.add_matching_file("*", ai: true, rules: [:doc_check], exclude: ["README*", "LICENSE*"])
 
       standard_readme, exploration_readme = matcher.gather_rules_ai("README.md")
