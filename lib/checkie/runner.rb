@@ -13,21 +13,19 @@ class Checkie::Runner
       rules = matcher.match_ai
       ai_rules = call_claude(rules[:exploration]) + call_claude_api(rules[:standard])
       reg_rules = matcher.match
+      pp reg_rules
       poster.post_ai_annotations!(ai_rules)
       poster.post_annotations!(reg_rules)
     end
   end
 
   def call_claude(rule_mapping)
-    total_calls = 0
-    pp "Beginning checks with Claude Code..."
     # assumes that non-exploratory rules have been filtered out
-    res = rule_mapping.map do |mapping|
+    rule_mapping.map do |mapping|
       # mappping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
       repo_dir = File.expand_path("../../", Dir.pwd)
-      total_calls += 1
       res = Open3.capture3("claude", "--model", "haiku", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
       puts res[0]
       prefix = res[0].index("```json")
@@ -39,17 +37,13 @@ class Checkie::Runner
       parsed = res[0][prefix+7...postfix]
       JSON.parse(parsed)
     end
-    pp "Total CC calls: #{total_calls}"
-    res
   end
 
   def call_claude_api(rule_mapping)
-    pp "Beginning checks with API..."
     # Assumes that exploratory rules have been filtered out
     client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
 
-    total_calls = 0
-    res = rule_mapping.map do |mapping|
+    rule_mapping.map do |mapping|
       # mapping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
@@ -75,11 +69,9 @@ class Checkie::Runner
             name: "report_violations"
           }
         )
-        total_calls += 1
 
         # Extract the tool use result
         tool_use = response.content&.find { |block| block.type == :tool_use }
-        pp tool_use
         if tool_use && tool_use.input
           tool_use.input
         else
@@ -91,8 +83,6 @@ class Checkie::Runner
         { "violations" => [] }
       end
     end
-    pp "Total API calls: #{total_calls}"
-    res
   end
 
   def structured_schema
