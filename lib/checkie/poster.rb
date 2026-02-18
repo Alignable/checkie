@@ -5,7 +5,7 @@ class Checkie::Poster
   LINE_WIDTH = 70
   GITHUB_ANNOTATION_BATCH = 50
 
-  def initialize(details, dry_run: false)
+  def initialize(details, dry_run: true)
     @details = details
     @dry_run = dry_run
   end
