@@ -19,9 +19,17 @@ def matching(file_pattern, &block)
   Checkie::Parser.instance.add_matching_file(file_pattern,&block)
 end
 
+def matching_ai(file_pattern, rules:, exclude: nil, &block)
+  Checkie::Parser.instance.add_matching_file(file_pattern, ai: true, rules: rules, exclude: exclude, &block)
+end
+
 
 def file_rule(name,description,references:[])
   Checkie::Parser.instance.add_file_rule(name, description, references: references)
+end
+
+def file_rule_ai(name, description, **opts)
+  Checkie::Parser.instance.add_file_rule(name, description, **opts.merge({ai: true}))
 end
 
 def run(url, action)

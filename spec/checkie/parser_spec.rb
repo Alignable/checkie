@@ -16,6 +16,13 @@ describe Checkie::Parser do
 
       expect(instance.rules["something"]).to be_present
     end
+    
+    it "adds an ai rule to the ai list" do
+      expect do
+        instance.add_file_rule(:something, "Because", ai: true)
+      end.to change { instance.rules_ai.length }.by(1)
+      expect(instance.rules_ai["something"]).to be_present
+    end
   end
 
   describe "add_matching_file" do
