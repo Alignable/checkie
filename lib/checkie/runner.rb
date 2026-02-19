@@ -34,7 +34,7 @@ class Checkie::Runner
         next
       end
       parsed = res[0][prefix+7...postfix]
-      JSON.parse(parsed)
+      JSON.parse(parsed).transform_keys(&:to_sym)
     end
   end
 
@@ -75,11 +75,11 @@ class Checkie::Runner
           tool_use.input
         else
           puts "No tool use found in response"
-          { "violations" => [] }
+          { :violations => [] }
         end
       rescue => e
         puts "Error calling Claude API: #{e.message}"
-        { "violations" => [] }
+        { :violations => [] }
       end
     end
   end

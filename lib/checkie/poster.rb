@@ -21,7 +21,7 @@ class Checkie::Poster
         else
           repo_id = @details[:base][:repo][:id]
           sha = @details[:head][:sha]
-          check_run_id = client.check_runs_for_ref(repo_id, sha, check_name: "checkie")&.check_runs&.first&.id
+          check_run_id = client.check_runs_for_ref(repo_id, sha, check_name: "checkieAI")&.check_runs&.first&.id
           annotations.each_slice(GITHUB_ANNOTATION_BATCH) do |a|
             client.update_check_run(repo_id, check_run_id, output: { annotations: a, title: "CheckieAI", summary: "#{annotations.length} annotations"})
           end
@@ -60,6 +60,7 @@ class Checkie::Poster
       r = r[:violations]
       next if r.empty?
       r.each do |annotation|
+        annotation = annotation.transform_keys(&:to_sym)
         # Because Claude can be stupid.
         next if annotation[:suggestion].downcase.include?("no violation")
         arr << {
