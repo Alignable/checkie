@@ -61,6 +61,7 @@ class Checkie::Poster
       next if r.empty?
       r.each do |annotation|
         # Because Claude can be stupid.
+        annotation = annotation.transform_keys(&:to_sym)
         next if annotation[:suggestion].downcase.include?("no violation")
         arr << {
           path: annotation[:file],
