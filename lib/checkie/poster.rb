@@ -15,21 +15,19 @@ class Checkie::Poster
       annotations = annotations_ai(rules)
       sha = @details[:head][:sha]
       
-      annotations.each do |a|
-        if @dry_run
-          pp a
-        else
-          repo_id = @details[:base][:repo][:id]
-          sha = @details[:head][:sha]
-          check_run_id = client.check_runs_for_ref(repo_id, sha, check_name: "checkie")&.check_runs&.first&.id
-          annotations.each_slice(GITHUB_ANNOTATION_BATCH) do |a|
-            client.update_check_run(repo_id, check_run_id, output: { annotations: a, title: "CheckieAI", summary: "#{annotations.length} annotations"})
-          end
+      if @dry_run
+        puts(annotations)
+      else
+        repo_id = @details[:base][:repo][:id]
+        sha = @details[:head][:sha]
+        check_run_id = client.check_runs_for_ref(repo_id, sha, check_name: "checkie")&.check_runs&.first&.id
+        annotations.each_slice(GITHUB_ANNOTATION_BATCH) do |a|
+          client.update_check_run(repo_id, check_run_id, output: { annotations: a, title: "CheckieAI", summary: "#{annotations.length} annotations"})
         end
-      rescue Octokit::UnprocessableEntity
-        pp "Bad request sent! Probably a line number issue: #{a[:path]}:#{a[:start_line]}"
       end
     end
+  rescue Octokit::UnprocessableEntity
+    pp "Bad request sent! Probably a line number issue: #{a[:path]}:#{a[:start_line]}"
   end
 
   # Post file rules as annotations
@@ -57,6 +55,7 @@ class Checkie::Poster
   def annotations_ai(rules)
     arr = []
     rules.each do |r|
+      pp r
       r = r[:violations]
       next if r.empty?
       r.each do |annotation|
