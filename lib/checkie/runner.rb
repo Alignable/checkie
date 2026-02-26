@@ -1,10 +1,13 @@
 require "open3"
 require "anthropic"
+
 class Checkie::Runner
+  MODEL = ENV.fetch("ANTHROPIC_MODEL", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
+
   # Action is the pull request action type
   def run(url, action)
     fetcher = Checkie::Fetcher.new(url)
-    poster = Checkie::Poster.new(fetcher.details, dry_run: false)
+    poster = Checkie::Poster.new(fetcher.details, dry_run: true)
 
     if action == "synchronize" || action == "opened"
       data = fetcher.fetch_files
@@ -18,14 +21,27 @@ class Checkie::Runner
     end
   end
 
+  def cc_env_vars
+    {
+      "ANTHROPIC_MODEL" => MODEL,
+      "CLAUDE_CODE_USE_BEDROCK" => "1",
+    }
+  end
+
   def call_claude(rule_mapping)
+    pp "Starting Claude Code run..."
     # assumes that non-exploratory rules have been filtered out
     rule_mapping.map do |mapping|
       # mappping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
       repo_dir = File.expand_path("../../", Dir.pwd)
-      res = Open3.capture3("claude", "--model", "haiku", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
+      res = Open3.capture3(
+        ENV.to_h.merge(cc_env_vars),
+        "claude",
+        "--dangerously-skip-permissions", "-p",
+        prompt, chdir: repo_dir
+      )
       puts res[0]
       prefix = res[0].index("```json")
       postfix = res[0].index("```", prefix + 7)
@@ -39,8 +55,11 @@ class Checkie::Runner
   end
 
   def call_claude_api(rule_mapping)
-    # Assumes that exploratory rules have been filtered out
-    client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
+    client = Anthropic::BedrockClient.new(
+      aws_region: ENV['AWS_REGION'] || 'us-east-1',
+      aws_access_key: ENV.fetch('CHECKIE_AWS_ACCESS_KEY_ID'),
+      aws_secret_key: ENV.fetch('CHECKIE_AWS_SECRET_ACCESS_KEY')
+    )
 
     rule_mapping.map do |mapping|
       # mapping == [rule strings joined by \n, arr of patch diffs]
@@ -48,25 +67,11 @@ class Checkie::Runner
 
       begin
         response = client.messages.create(
-          model: "claude-haiku-4-5-20251001",
+          model: MODEL,
           max_tokens: 4096,
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          tools: [
-            {
-              name: "report_violations",
-              description: "Report code style violations found in the PR diff",
-              input_schema: structured_schema
-            }
-          ],
-          tool_choice: {
-            type: "tool",
-            name: "report_violations"
-          }
+          messages: [{ role: "user", content: prompt }],
+          tools: [{ name: "report_violations", description: "Report code style violations found in the PR diff", input_schema: structured_schema }],
+          tool_choice: { type: "tool", name: "report_violations" }
         )
 
         # Extract the tool use result
@@ -75,11 +80,11 @@ class Checkie::Runner
           tool_use.input
         else
           puts "No tool use found in response"
-          { :violations => [] }
+          { violations: [] }
         end
       rescue => e
-        puts "Error calling Claude API: #{e.message}"
-        { :violations => [] }
+        puts "Error calling Bedrock API: #{e.message}"
+        { violations: [] }
       end
     end
   end
