@@ -29,7 +29,6 @@ class Checkie::Runner
   end
 
   def call_claude(rule_mapping)
-    pp "Starting Claude Code run..."
     # assumes that non-exploratory rules have been filtered out
     rule_mapping.map do |mapping|
       # mappping == [rule strings joined by \n, arr of patch diffs]
