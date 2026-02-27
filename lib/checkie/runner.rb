@@ -1,6 +1,11 @@
 require "open3"
-require "anthropic"
+require "net/http"
+require "json"
+require "uri"
+
 class Checkie::Runner
+  MODEL = ENV.fetch("ANTHROPIC_MODEL", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
+
   # Action is the pull request action type
   def run(url, action)
     fetcher = Checkie::Fetcher.new(url)
@@ -18,6 +23,13 @@ class Checkie::Runner
     end
   end
 
+  def cc_env_vars
+    {
+      "ANTHROPIC_MODEL" => MODEL,
+      "CLAUDE_CODE_USE_BEDROCK" => "1",
+    }
+  end
+
   def call_claude(rule_mapping)
     # assumes that non-exploratory rules have been filtered out
     rule_mapping.map do |mapping|
@@ -25,7 +37,12 @@ class Checkie::Runner
       prompt = create_prompt(mapping[0], mapping[1])
 
       repo_dir = File.expand_path("../../", Dir.pwd)
-      res = Open3.capture3("claude", "--model", "haiku", "--dangerously-skip-permissions", "-p", prompt, chdir: repo_dir)
+      res = Open3.capture3(
+        ENV.to_h.merge(cc_env_vars),
+        "claude",
+        "--dangerously-skip-permissions", "-p",
+        prompt, chdir: repo_dir
+      )
       puts res[0]
       prefix = res[0].index("```json")
       postfix = res[0].index("```", prefix + 7)
@@ -39,47 +56,45 @@ class Checkie::Runner
   end
 
   def call_claude_api(rule_mapping)
-    # Assumes that exploratory rules have been filtered out
-    client = Anthropic::Client.new(api_key: ENV["ANTHROPIC_API_KEY"])
+    token = ENV.fetch('AWS_BEARER_TOKEN_BEDROCK')
 
     rule_mapping.map do |mapping|
       # mapping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
       begin
-        response = client.messages.create(
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 4096,
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          tools: [
-            {
-              name: "report_violations",
-              description: "Report code style violations found in the PR diff",
-              input_schema: structured_schema
-            }
-          ],
-          tool_choice: {
-            type: "tool",
-            name: "report_violations"
-          }
-        )
+        uri = URI("https://bedrock-runtime.us-east-1.amazonaws.com/model/#{URI.encode_www_form_component(MODEL)}/invoke")
 
-        # Extract the tool use result
-        tool_use = response.content&.find { |block| block.type == :tool_use }
-        if tool_use && tool_use.input
-          tool_use.input
+        body = JSON.generate({
+          anthropic_version: "bedrock-2023-05-31",
+          max_tokens: 4096,
+          messages: [{ role: "user", content: prompt }],
+          tools: [{ name: "report_violations", description: "Report code style violations found in the PR diff", input_schema: structured_schema }],
+          tool_choice: { type: "tool", name: "report_violations" }
+        })
+
+        req = Net::HTTP::Post.new(uri)
+        req['Authorization'] = "Bearer #{token}"
+        req['Content-Type'] = 'application/json'
+        req.body = body
+
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        res = http.request(req)
+
+        response_body = JSON.parse(res.body)
+        pp response_body
+        tool_use = response_body["content"]&.find { |b| b["type"] == "tool_use" }
+
+        if tool_use
+          tool_use["input"].transform_keys(&:to_sym)
         else
-          puts "No tool use found in response"
-          { :violations => [] }
+          puts "No tool use found in response: #{res.body}"
+          { violations: [] }
         end
       rescue => e
-        puts "Error calling Claude API: #{e.message}"
-        { :violations => [] }
+        puts "Error calling Bedrock API: #{e.message}"
+        { violations: [] }
       end
     end
   end
