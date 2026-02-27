@@ -1,5 +1,7 @@
 require "open3"
-require "anthropic"
+require "net/http"
+require "json"
+require "uri"
 
 class Checkie::Runner
   MODEL = ENV.fetch("ANTHROPIC_MODEL", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
@@ -54,31 +56,40 @@ class Checkie::Runner
   end
 
   def call_claude_api(rule_mapping)
-    client = Anthropic::BedrockClient.new(
-      aws_region: ENV['AWS_REGION'] || 'us-east-1',
-      aws_access_key: ENV.fetch('CHECKIE_AWS_ACCESS_KEY_ID'),
-      aws_secret_key: ENV.fetch('CHECKIE_AWS_SECRET_ACCESS_KEY')
-    )
+    token = ENV.fetch('AWS_BEARER_TOKEN_BEDROCK')
 
     rule_mapping.map do |mapping|
       # mapping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
       begin
-        response = client.messages.create(
-          model: MODEL,
+        uri = URI("https://bedrock-runtime.us-east-1.amazonaws.com/model/#{URI.encode_www_form_component(MODEL)}/invoke")
+
+        body = JSON.generate({
+          anthropic_version: "bedrock-2023-05-31",
           max_tokens: 4096,
           messages: [{ role: "user", content: prompt }],
           tools: [{ name: "report_violations", description: "Report code style violations found in the PR diff", input_schema: structured_schema }],
           tool_choice: { type: "tool", name: "report_violations" }
-        )
+        })
 
-        # Extract the tool use result
-        tool_use = response.content&.find { |block| block.type == :tool_use }
-        if tool_use && tool_use.input
-          tool_use.input
+        req = Net::HTTP::Post.new(uri)
+        req['Authorization'] = "Bearer #{token}"
+        req['Content-Type'] = 'application/json'
+        req.body = body
+
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        res = http.request(req)
+
+        response_body = JSON.parse(res.body)
+        pp response_body
+        tool_use = response_body["content"]&.find { |b| b["type"] == "tool_use" }
+
+        if tool_use
+          tool_use["input"].transform_keys(&:to_sym)
         else
-          puts "No tool use found in response"
+          puts "No tool use found in response: #{res.body}"
           { violations: [] }
         end
       rescue => e
