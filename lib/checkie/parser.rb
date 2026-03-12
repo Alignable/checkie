@@ -17,15 +17,15 @@ class Checkie::Parser
 
   def add_matching_file(glob_pattern, matching_proc=nil, **opts, &block)
     matching_proc ||= block
-    obj = { pattern: glob_pattern, 
-            matching_proc: matching_proc 
+    obj = { pattern: glob_pattern,
+            matching_proc: matching_proc
           }
+    if opts[:exclude]
+      obj[:exclude] = Array(opts[:exclude])
+    end
     if opts[:ai]
       obj[:rules] = opts[:rules].map do |r|
         @rules_ai[r.to_s]
-      end
-      if opts[:exclude]
-         obj[:exclude] = Array(opts[:exclude])
       end
       @matches_ai << obj
     else

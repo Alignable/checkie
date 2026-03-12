@@ -15,8 +15,8 @@ require "#{lib_path}/matcher"
 require "#{lib_path}/poster"
 require "#{lib_path}/runner"
 
-def matching(file_pattern, &block)
-  Checkie::Parser.instance.add_matching_file(file_pattern,&block)
+def matching(file_pattern, exclude: nil, &block)
+  Checkie::Parser.instance.add_matching_file(file_pattern, exclude: exclude, &block)
 end
 
 def matching_ai(file_pattern, rules:, exclude: nil, &block)

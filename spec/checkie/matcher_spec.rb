@@ -41,6 +41,47 @@ describe Checkie::Matcher do
       end
       expect(matcher.match).to eq({"readme"=>[["README.md", {additions: 45, deletions: 0, :url=>"https://github.com/Alignable/checkie/blob/dd52731e1f894f53e5972e57255405961ca4ab38/README.md"}]] })
     end
+
+    describe "exclude" do
+      it "supports exclude pattern" do
+        instance.add_file_rule(:any_file, "You edited a file")
+        instance.add_matching_file("*", exclude: "README*") do |changes,files|
+          files.added do
+            check(:any_file)
+          end
+        end
+
+        # Should not match anything since README.md (the only file) is excluded
+        expect(matcher.match).to eq({})
+      end
+
+      it "supports array of exclude patterns" do
+        instance.add_file_rule(:any_file, "You edited a file")
+        instance.add_matching_file("*", exclude: ["README*"]) do |changes,files|
+          files.added do
+            check(:any_file)
+          end
+        end
+
+        # Should not match anything since README.md (the only file) is excluded
+        expect(matcher.match).to eq({})
+      end
+
+      it "includes files not matching exclude patterns" do
+        instance.add_file_rule(:md_file, "You edited a markdown file")
+        instance.add_matching_file("*", exclude: ["LICENSE*"]) do |changes,files|
+          files.added do
+            check(:md_file)
+          end
+        end
+
+        # Should match README.md since only LICENSE* is excluded
+        result = matcher.match
+        expect(result["md_file"]).not_to be_nil
+        expect(result["md_file"].length).to eq(1)
+        expect(result["md_file"][0][0]).to eq("README.md")
+      end
+    end
   end
 
   describe "#match_ai" do

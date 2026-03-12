@@ -76,12 +76,15 @@ class Checkie::Matcher
         filename = file[:filename]
         patch = file[:patch]
 
-        if File.fnmatch(match_details[:pattern],filename,File::FNM_EXTGLOB)
-          files.add_hunk(file[:status],filename, url: file[:blob_url], additions: file[:additions], deletions: file[:deletions])
+        # Only consider files matching include pattern
+        next unless File.fnmatch(match_details[:pattern], filename, File::FNM_EXTGLOB)
+        # Skip files matching exclude patterns
+        next if match_details[:exclude] && match_details[:exclude].any? { |p| File.fnmatch(p, filename, File::FNM_EXTGLOB) }
 
-          # need to break changes into added and removed
-          changes.add_patch(filename,patch,  url: file[:blob_url])
-        end
+        files.add_hunk(file[:status],filename, url: file[:blob_url], additions: file[:additions], deletions: file[:deletions])
+
+        # need to break changes into added and removed
+        changes.add_patch(filename,patch,  url: file[:blob_url])
       end
 
       if files.present?

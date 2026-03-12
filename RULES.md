@@ -52,10 +52,14 @@ file_rule :query_preloads,
   "Looks like you're querying an ActiveRecord model, did you check the console for speed and N+1's?"
 
 # Determine the files we want to look for this rule in
-matching("app/models/**.rb") do |changes, files| 
+matching("app/models/**.rb") do |changes, files|
 
   # changes is a match set that contains all lines of the PR app/models/**.rb
   # files is a match set that contains all files of the PR in app/models/**.rb
+
+  # You can also exclude certain files from matching:
+  # matching("app/**/*.rb", exclude: "vendor/**/*")
+  # matching("app/**/*.rb", exclude: ["vendor/**/*", "node_modules/**/*"])
 
   # changes and files all support added, removed and touched matchers
   # each of those matches can take no parameters (were there any?) or
