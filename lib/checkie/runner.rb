@@ -40,8 +40,8 @@ class Checkie::Runner
       res = Open3.capture3(
         ENV.to_h.merge(cc_env_vars),
         "claude",
-        "--dangerously-skip-permissions", "-p",
-        prompt, chdir: repo_dir
+        "--dangerously-skip-permissions", "-p", "-",
+        chdir: repo_dir, stdin_data: prompt
       )
       puts res[0]
       prefix = res[0].index("```json")

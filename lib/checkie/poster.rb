@@ -57,6 +57,7 @@ class Checkie::Poster
     rules.each do |r|
       pp r
       r = r[:violations]
+      r = JSON.parse(r) if r.is_a?(String)
       next if r.empty?
       r.each do |annotation|
         annotation = annotation.transform_keys(&:to_sym)
