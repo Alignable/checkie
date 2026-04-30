@@ -15,10 +15,10 @@ class Checkie::Runner
       data = fetcher.fetch_files
 
       matcher = Checkie::Matcher.new(data)
-      rules = matcher.match_ai
-      ai_rules = call_claude(rules[:exploration]) + call_claude_api(rules[:standard])
+      # rules = matcher.match_ai
+      # ai_rules = call_claude(rules[:exploration]) + call_claude_api(rules[:standard])
       reg_rules = matcher.match
-      poster.post_ai_annotations!(ai_rules)
+      # poster.post_ai_annotations!(ai_rules)
       poster.post_annotations!(reg_rules)
     end
   end
