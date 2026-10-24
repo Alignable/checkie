@@ -33,7 +33,7 @@ class Checkie::Runner
   def call_claude(rule_mapping)
     # assumes that non-exploratory rules have been filtered out
     rule_mapping.map do |mapping|
-      # mappping == [rule strings joined by \n, arr of patch diffs]
+      # mapping == [rule strings joined by \n, arr of patch diffs]
       prompt = create_prompt(mapping[0], mapping[1])
 
       repo_dir = File.expand_path("../../", Dir.pwd)
@@ -131,7 +131,7 @@ class Checkie::Runner
     end
     <<-PROMPT
     You are an AI code reviewer, going through PRs and identifying any changes that 
-    don't follow the teams established best practices.
+    don't follow the team's established best practices.
 
     Code style rules:
     #{rules}
